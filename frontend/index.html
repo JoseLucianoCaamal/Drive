@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Iconos de Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+<body>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-view" class="view-container active">
+        <div class="login-box">
+            <div class="logo">
+                <span class="material-symbols-outlined icon-large">cloud_sync</span>
+                <h2>Drive Pro</h2>
+            </div>
+            <p class="subtitle">Acceso seguro a tu servidor</p>
+            
+            <div class="input-group">
+                <span class="material-symbols-outlined">person</span>
+                <input type="text" id="username" placeholder="Usuario" autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <span class="material-symbols-outlined">lock</span>
+                <input type="password" id="password" placeholder="Contraseña">
+            </div>
+            
+            <button onclick="iniciarSesion()" id="btn-login">Ingresar</button>
+            <p id="login-error" class="error-text"></p>
+        </div>
+    </div>
+
+    <!-- PANTALLA PRINCIPAL (DASHBOARD) -->
+    <div id="dashboard-view" class="view-container">
+        <nav class="top-nav">
+            <div class="logo-small">
+                <span class="material-symbols-outlined">cloud</span>
+                <h3>Drive Pro</h3>
+            </div>
+            <div class="user-menu">
+                <span class="material-symbols-outlined">account_circle</span>
+                <span id="user-display">Bienvenido</span>
+                <button onclick="cerrarSesion()" class="btn-icon" title="Cerrar Sesión">
+                    <span class="material-symbols-outlined">logout</span>
+                </button>
+            </div>
+        </nav>
+
+        <main class="dashboard-content">
+            <div class="upload-section">
+                <div class="upload-dropzone">
+                    <span class="material-symbols-outlined icon-upload">upload_file</span>
+                    <h4>Sube tus archivos aquí</h4>
+                    <p>Selecciona un archivo para enviarlo a tu servidor Ubuntu</p>
+                    <input type="file" id="fileInput" class="file-input-hidden">
+                    <label for="fileInput" class="btn-primary">Seleccionar Archivo</label>
+                </div>
+                <button onclick="subirArchivo()" id="btn-upload" class="btn-success" style="display: none;">Confirmar Subida</button>
+                <p id="upload-status" class="status-text"></p>
+            </div>
+
+            <div class="files-section">
+                <h3><span class="material-symbols-outlined">folder_open</span> Mi Almacenamiento</h3>
+                <div class="table-container">
+                    <ul id="file-list" class="file-list">
+                        <!-- Los archivos aparecerán aquí -->
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

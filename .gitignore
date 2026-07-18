@@ -1,0 +1,11 @@
+# Dependencias de Node
+backend/node_modules/
+package-lock.json
+
+# Archivos de usuarios y Base de Datos (¡Privado!)
+backend/uploads/
+backend/drive.db
+
+# Logs y archivos del sistema
+*.log
+.DS_Store
