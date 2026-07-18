@@ -3,7 +3,6 @@ let usuarioActual = localStorage.getItem('drive_usuario') || '';
 let rolActual = localStorage.getItem('drive_rol') || '';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Si encontramos un usuario en la memoria, saltamos el login
     if (usuarioActual && rolActual) {
         activarDashboard(usuarioActual, rolActual);
     }
@@ -38,11 +37,8 @@ async function iniciarSesion() {
         if (respuesta.ok) {
             usuarioActual = datos.usuario;
             rolActual = datos.rol;
-
-            // Guardamos las credenciales en el navegador
             localStorage.setItem('drive_usuario', usuarioActual);
             localStorage.setItem('drive_rol', rolActual);
-
             activarDashboard(usuarioActual, rolActual);
         } else {
             errorText.innerText = datos.mensaje || "Credenciales incorrectas";
@@ -54,7 +50,6 @@ async function iniciarSesion() {
     }
 }
 
-// Función para cambiar la vista
 function activarDashboard(user, rol) {
     document.getElementById('login-view').classList.remove('active');
     document.getElementById('dashboard-view').classList.add('active');
@@ -64,7 +59,6 @@ function activarDashboard(user, rol) {
         saludo += ` <span class="admin-badge" style="display:inline-block">Admin</span>`;
     }
     document.getElementById('user-display').innerHTML = saludo;
-    
     cargarArchivos();
 }
 
@@ -94,10 +88,28 @@ async function subirArchivo() {
     }
 }
 
+// NUEVA FUNCIÓN: Alternar visibilidad
+async function cambiarVisibilidad(id, estadoActual) {
+    const nuevaVisibilidad = estadoActual === 'publico' ? 'privado' : 'publico';
+    
+    try {
+        const respuesta = await fetch('/api/cambiar-visibilidad', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, visibilidad: nuevaVisibilidad })
+        });
+        
+        if (respuesta.ok) {
+            cargarArchivos(); // Recargamos para ver el cambio de ícono
+        }
+    } catch (error) {
+        console.error("Error al cambiar visibilidad:", error);
+    }
+}
+
 async function cargarArchivos() {
     const contenedor = document.getElementById('file-list');
     contenedor.innerHTML = "<p>Cargando archivos...</p>";
-    contenedor.className = "gallery-grid"; 
 
     try {
         const respuesta = await fetch('/api/archivos', {
@@ -116,17 +128,16 @@ async function cargarArchivos() {
 
         archivos.forEach(archivo => {
             const esImagen = archivo.tipo_mime && archivo.tipo_mime.startsWith('image/');
-            
-            // CORRECCIÓN: La ruta ahora incluye al dueño (archivo.propietario)
             const rutaArchivo = `/uploads/${archivo.propietario}/${archivo.nombre_fisico}`;
             
+            // Lógica de visibilidad
+            const esPublico = archivo.visibilidad === 'publico';
+            const iconoVisibilidad = esPublico ? 'public' : 'lock';
+            const colorVisibilidad = esPublico ? '#10b981' : '#64748b'; // Verde para público, gris para privado
+
             const miniatura = esImagen 
                 ? `<img src="${rutaArchivo}" alt="${archivo.nombre_original}" loading="lazy">`
                 : `<span class="material-symbols-outlined icon-doc">description</span>`;
-
-            const dueñoFila = rolActual === 'admin' 
-                ? `<span class="file-owner">@${archivo.propietario}</span>` 
-                : '';
 
             const tarjeta = `
                 <div class="file-card">
@@ -136,7 +147,10 @@ async function cargarArchivos() {
                     <div class="file-info">
                         <span class="file-name" title="${archivo.nombre_original}">${archivo.nombre_original}</span>
                         <div class="file-meta">
-                            ${dueñoFila}
+                            <button onclick="cambiarVisibilidad(${archivo.id}, '${archivo.visibilidad}')" style="background:none; border:none; cursor:pointer; color: ${colorVisibilidad}; padding: 5px;">
+                                <span class="material-symbols-outlined" title="Cambiar visibilidad">${iconoVisibilidad}</span>
+                            </button>
+                            ${rolActual === 'admin' ? `<span>@${archivo.propietario}</span>` : ''}
                         </div>
                     </div>
                 </div>
@@ -153,10 +167,7 @@ function cerrarSesion() {
     usuarioActual = ''; rolActual = '';
     localStorage.removeItem('drive_usuario');
     localStorage.removeItem('drive_rol');
-    
     document.getElementById('dashboard-view').classList.remove('active');
     document.getElementById('login-view').classList.add('active');
-    document.getElementById('password').value = '';
-    document.getElementById('login-error').innerText = '';
     document.getElementById('file-list').innerHTML = ''; 
 }

@@ -110,3 +110,20 @@ app.post('/api/archivos', (req, res) => {
 app.listen(3000, '0.0.0.0', () => {
     console.log('🚀 Servidor Pro V2 (Roles y Galería) activo en puerto 3000...');
 });
+
+// Ruta para cambiar visibilidad
+app.post('/api/cambiar-visibilidad', (req, res) => {
+    const { id, visibilidad } = req.body;
+    db.run("UPDATE archivos SET visibilidad = ? WHERE id = ?", [visibilidad, id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ mensaje: "Visibilidad actualizada" });
+    });
+});
+
+// Ruta pública (para que los no-usuarios vean archivos públicos)
+app.get('/api/archivos-publicos', (req, res) => {
+    db.all("SELECT * FROM archivos WHERE visibilidad = 'publico'", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
