@@ -1,43 +1,37 @@
-let currentPath = ''; // Variable global para saber dónde estamos
+let currentPath = '';
 
-// 1. Función para subir archivos
+// Subir archivo a la ruta actual
 async function subirArchivo() {
     const input = document.getElementById('inputArchivo');
-    if (input.files.length === 0) return alert('Selecciona un archivo primero');
+    if (input.files.length === 0) return alert('Selecciona un archivo');
 
     const formData = new FormData();
     formData.append('archivo', input.files[0]);
+    formData.append('path', currentPath); // Envía la ruta donde estás parado
 
-    try {
-        // Enviamos también la ruta actual para saber dónde guardar (opcional, por ahora a la raíz)
-        const res = await fetch('/subir', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (res.ok) {
-            alert('Subido correctamente');
-            input.value = ''; // Limpiar el input
-            cargarArchivos(currentPath); // Recargar la lista en la carpeta actual
-        } else {
-            alert('Error en el servidor');
-        }
-    } catch (e) {
-        console.error(e);
-        alert('Error de conexión');
+    const res = await fetch('/subir', { method: 'POST', body: formData });
+    if (res.ok) {
+        alert('Subido con éxito');
+        input.value = '';
+        document.getElementById('file-name').innerText = 'Ningún archivo';
+        cargarArchivos(currentPath);
+    } else {
+        alert('Error en el servidor');
     }
 }
 
-// 2. Función para listar y navegar
+// Listar y navegar
 async function cargarArchivos(folderPath = '') {
     currentPath = folderPath;
+    document.getElementById('current-folder-label').innerText = 
+        folderPath ? `Subiendo a: /${folderPath}` : 'Subiendo a: Raíz';
+
     const res = await fetch(`/listar?path=${encodeURIComponent(folderPath)}`);
     const archivos = await res.json();
     const listaDiv = document.getElementById('file-list');
     
     listaDiv.innerHTML = ''; 
 
-    // Botón "Volver atrás"
     if (currentPath !== '') {
         const backBtn = document.createElement('div');
         backBtn.className = 'file-item';
@@ -49,12 +43,10 @@ async function cargarArchivos(folderPath = '') {
         listaDiv.appendChild(backBtn);
     }
     
-    // Listar archivos y carpetas
     archivos.forEach(archivo => {
         const item = document.createElement('div');
         item.className = 'file-item';
         item.innerHTML = `${archivo.isDirectory ? '📁' : '📄'} ${archivo.name}`;
-        
         if (archivo.isDirectory) {
             item.onclick = () => cargarArchivos(archivo.path);
         }
@@ -62,5 +54,8 @@ async function cargarArchivos(folderPath = '') {
     });
 }
 
-// Ejecutar al cargar la página
+function mostrarNombre() {
+    document.getElementById('file-name').innerText = document.getElementById('inputArchivo').files[0].name;
+}
+
 window.onload = () => cargarArchivos();

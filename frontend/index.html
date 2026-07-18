@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/img/akko.png" type="image/png">
     <title>Drive AKKO</title>
@@ -13,14 +14,17 @@
     </header>
 
     <main class="container">
-        <!-- Tarjeta de subida -->
         <div class="upload-card">
             <h2>Subir Archivo</h2>
-            <input type="file" id="inputArchivo">
-            <button onclick="subirArchivo()">Subir al Servidor</button>
+            <p id="current-folder-label">Subiendo a: Raíz</p>
+            <label class="custom-file-upload">
+                <input type="file" id="inputArchivo" onchange="mostrarNombre()">
+                Seleccionar Archivo
+            </label>
+            <span id="file-name">Ningún archivo</span>
+            <button class="btn-upload" onclick="subirArchivo()">Subir al Servidor</button>
         </div>
 
-        <!-- Nueva Tarjeta de explorador -->
         <div class="explorer-card">
             <h3>Mis Archivos</h3>
             <div id="file-list">Cargando...</div>

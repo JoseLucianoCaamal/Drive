@@ -1,11 +1,21 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs'); // Necesario para leer archivos
+const fs = require('fs');
 const app = express();
 
+app.use(express.json());
+
+// Configuración de almacenamiento dinámica
 const storage = multer.diskStorage({
-    destination: '../uploads/Lic/', 
+    destination: (req, file, cb) => {
+        const subPath = req.body.path || ''; 
+        const dest = path.join(__dirname, '../uploads', subPath);
+        
+        // Crea la carpeta si no existe
+        if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+        cb(null, dest);
+    },
     filename: (req, file, cb) => {
         cb(null, file.originalname); 
     }
@@ -13,24 +23,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Servir carpetas estáticas
+// Rutas estáticas
 app.use('/img', express.static(path.join(__dirname, '../Img')));
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// NUEVA RUTA: Listar archivos
-// Reemplaza tu ruta /listar actual por esta:
+// Ruta para listar archivos y carpetas
 app.get('/listar', (req, res) => {
-    // Obtenemos la ruta que pide el usuario (si no hay, es la raíz)
-    const subPath = req.query.path || ''; 
-    
-    // Seguridad: evitar que intenten salir de la carpeta uploads con ".."
-    if (subPath.includes('..')) return res.status(403).json({ error: 'Acceso denegado' });
-
+    const subPath = req.query.path || '';
     const dirPath = path.join(__dirname, '../uploads', subPath);
     
     fs.readdir(dirPath, { withFileTypes: true }, (err, files) => {
-        if (err) return res.status(500).json({ error: 'No se pudo leer la carpeta' });
+        if (err) return res.status(500).json({ error: 'Error al leer' });
         
         const list = files.map(f => ({ 
             name: f.name, 
@@ -41,6 +45,7 @@ app.get('/listar', (req, res) => {
     });
 });
 
+// Ruta de subida
 app.post('/subir', upload.single('archivo'), (req, res) => {
     if (!req.file) return res.status(400).send('No se recibió archivo');
     res.send('Subido con éxito');
