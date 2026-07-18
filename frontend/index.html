@@ -2,67 +2,30 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive AKKO</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="/img/akko.png" type="image/png">
+    <title>Drive AKKO</title>
 </head>
 <body>
+    <header>
+        <img src="/img/akko.png" alt="Logo AKKO" class="logo">
+        <h1>Drive AKKO</h1>
+    </header>
 
-    <!-- 1. VISTA PÚBLICA (Landing page: esta debe ser la inicial) -->
-    <div id="public-view" class="view-container">
-        <nav class="top-nav">
-            <div class="logo-small" style="display: flex; align-items: center; gap: 10px;">
-                <img src="/img/akko.png" alt="Logo" style="width: 35px; height: 35px; border-radius: 50%;">
-                <h3 style="margin: 0;">Drive AKKO - Público</h3>
-            </div>
-            <button onclick="cambiarVista('login-view')" class="btn-primary">Iniciar Sesión</button>
-        </nav>
-        <main class="dashboard-content">
-            <h3>Archivos Públicos</h3>
-            <div id="public-file-list" class="gallery-grid"></div>
-        </main>
-    </div>
-
-    <!-- 2. PANTALLA DE LOGIN -->
-    <div id="login-view" class="view-container">
-        <div class="login-box">
-            <div class="logo">
-                <img src="/img/akko.png" alt="Logo" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px;">
-                <h2>Drive AKKO</h2>
-            </div>
-            <button onclick="cambiarVista('public-view')" class="btn-icon">← Volver al inicio</button>
-            <div class="input-group"><span class="material-symbols-outlined">person</span><input type="text" id="username" placeholder="Usuario"></div>
-            <div class="input-group"><span class="material-symbols-outlined">lock</span><input type="password" id="password" placeholder="Contraseña"></div>
-            <button onclick="iniciarSesion()" id="btn-login">Ingresar</button>
-            <p id="login-error" class="error-text"></p>
+    <main class="container">
+        <!-- Tarjeta de subida -->
+        <div class="upload-card">
+            <h2>Subir Archivo</h2>
+            <input type="file" id="inputArchivo">
+            <button onclick="subirArchivo()">Subir al Servidor</button>
         </div>
-    </div>
 
-    <!-- 3. PANTALLA DASHBOARD -->
-    <div id="dashboard-view" class="view-container">
-        <nav class="top-nav">
-            <div class="logo-small" style="display: flex; align-items: center; gap: 10px;">
-                <img src="/img/akko.png" alt="Logo" style="width: 35px; height: 35px; border-radius: 50%;">
-                <h3 style="margin: 0;">Drive AKKO</h3>
-            </div>
-            <div class="user-menu">
-                <span id="user-display"></span>
-                <button onclick="cerrarSesion()" class="btn-icon"><span class="material-symbols-outlined">logout</span></button>
-            </div>
-        </nav>
-        <main class="dashboard-content">
-            <div class="upload-section">
-                <!-- ... (tu zona de subida existente) ... -->
-                <input type="file" id="fileInput" class="file-input-hidden"><label for="fileInput" class="btn-primary">Seleccionar Archivo</label>
-                <button onclick="subirArchivo()" id="btn-upload" class="btn-success" style="display: none;">Confirmar</button>
-            </div>
-            <div class="files-section">
-                <ul id="file-list" class="file-list"></ul>
-            </div>
-        </main>
-    </div>
+        <!-- Nueva Tarjeta de explorador -->
+        <div class="explorer-card">
+            <h3>Mis Archivos</h3>
+            <div id="file-list">Cargando...</div>
+        </div>
+    </main>
 
     <script src="app.js"></script>
 </body>
