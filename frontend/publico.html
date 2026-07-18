@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Drive Pro - Acceso Público</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <h3>Drive Pro - Archivos Públicos</h3>
+    </nav>
+
+    <main class="dashboard-content">
+        <div class="files-section">
+            <ul id="file-list" class="gallery-grid">
+                <!-- Los archivos públicos aparecerán aquí -->
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        async function cargarPublicos() {
+            const contenedor = document.getElementById('file-list');
+            try {
+                const respuesta = await fetch('/api/archivos-publicos');
+                const archivos = await respuesta.json();
+                
+                contenedor.innerHTML = "";
+                
+                if (archivos.length === 0) {
+                    contenedor.innerHTML = "<p>No hay archivos públicos disponibles.</p>";
+                    return;
+                }
+
+                archivos.forEach(archivo => {
+                    const esImagen = archivo.tipo_mime && archivo.tipo_mime.startsWith('image/');
+                    const rutaArchivo = `/uploads/${archivo.propietario}/${archivo.nombre_fisico}`;
+                    
+                    const miniatura = esImagen 
+                        ? `<img src="${rutaArchivo}" alt="${archivo.nombre_original}">`
+                        : `<span class="material-symbols-outlined">description</span>`;
+
+                    contenedor.innerHTML += `
+                        <li class="file-card">
+                            <a href="${rutaArchivo}" target="_blank" class="file-thumb">
+                                ${miniatura}
+                            </a>
+                            <p>${archivo.nombre_original}</p>
+                        </li>
+                    `;
+                });
+            } catch (error) {
+                contenedor.innerHTML = "<p>Error al cargar archivos.</p>";
+            }
+        }
+        cargarPublicos();
+    </script>
+</body>
+</html>

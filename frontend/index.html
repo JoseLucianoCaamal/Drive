@@ -5,75 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drive AKKO</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Iconos de Google -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    <!-- Favicon -->
     <link rel="icon" href="/img/akko.png" type="image/png">
 </head>
 <body>
 
-    <!-- PANTALLA DE LOGIN -->
-    <div id="login-view" class="view-container active">
+    <!-- 1. VISTA PÚBLICA (Landing page: esta debe ser la inicial) -->
+    <div id="public-view" class="view-container">
+        <nav class="top-nav">
+            <div class="logo-small" style="display: flex; align-items: center; gap: 10px;">
+                <img src="/img/akko.png" alt="Logo" style="width: 35px; height: 35px; border-radius: 50%;">
+                <h3 style="margin: 0;">Drive AKKO - Público</h3>
+            </div>
+            <button onclick="cambiarVista('login-view')" class="btn-primary">Iniciar Sesión</button>
+        </nav>
+        <main class="dashboard-content">
+            <h3>Archivos Públicos</h3>
+            <div id="public-file-list" class="gallery-grid"></div>
+        </main>
+    </div>
+
+    <!-- 2. PANTALLA DE LOGIN -->
+    <div id="login-view" class="view-container">
         <div class="login-box">
             <div class="logo">
                 <img src="/img/akko.png" alt="Logo" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px;">
                 <h2>Drive AKKO</h2>
             </div>
-            <p class="subtitle">Acceso al servidor</p>
-            
-            <div class="input-group">
-                <span class="material-symbols-outlined">person</span>
-                <input type="text" id="username" placeholder="Usuario" autocomplete="off">
-            </div>
-            
-            <div class="input-group">
-                <span class="material-symbols-outlined">lock</span>
-                <input type="password" id="password" placeholder="Contraseña">
-            </div>
-            
+            <button onclick="cambiarVista('public-view')" class="btn-icon">← Volver al inicio</button>
+            <div class="input-group"><span class="material-symbols-outlined">person</span><input type="text" id="username" placeholder="Usuario"></div>
+            <div class="input-group"><span class="material-symbols-outlined">lock</span><input type="password" id="password" placeholder="Contraseña"></div>
             <button onclick="iniciarSesion()" id="btn-login">Ingresar</button>
             <p id="login-error" class="error-text"></p>
         </div>
     </div>
 
-    <!-- PANTALLA PRINCIPAL (DASHBOARD) -->
+    <!-- 3. PANTALLA DASHBOARD -->
     <div id="dashboard-view" class="view-container">
         <nav class="top-nav">
-            <!-- AQUÍ ESTÁ EL LOGO EN EL NAV -->
             <div class="logo-small" style="display: flex; align-items: center; gap: 10px;">
                 <img src="/img/akko.png" alt="Logo" style="width: 35px; height: 35px; border-radius: 50%;">
                 <h3 style="margin: 0;">Drive AKKO</h3>
             </div>
-            
             <div class="user-menu">
-                <span class="material-symbols-outlined">account_circle</span>
-                <span id="user-display">Bienvenido</span>
-                <button onclick="cerrarSesion()" class="btn-icon" title="Cerrar Sesión">
-                    <span class="material-symbols-outlined">logout</span>
-                </button>
+                <span id="user-display"></span>
+                <button onclick="cerrarSesion()" class="btn-icon"><span class="material-symbols-outlined">logout</span></button>
             </div>
         </nav>
-
         <main class="dashboard-content">
             <div class="upload-section">
-                <div class="upload-dropzone">
-                    <span class="material-symbols-outlined icon-upload">upload_file</span>
-                    <h4>Sube tus archivos aquí</h4>
-                    <p>Selecciona un archivo para enviarlo a tu servidor Ubuntu</p>
-                    <input type="file" id="fileInput" class="file-input-hidden">
-                    <label for="fileInput" class="btn-primary">Seleccionar Archivo</label>
-                </div>
-                <button onclick="subirArchivo()" id="btn-upload" class="btn-success" style="display: none;">Confirmar Subida</button>
-                <p id="upload-status" class="status-text"></p>
+                <!-- ... (tu zona de subida existente) ... -->
+                <input type="file" id="fileInput" class="file-input-hidden"><label for="fileInput" class="btn-primary">Seleccionar Archivo</label>
+                <button onclick="subirArchivo()" id="btn-upload" class="btn-success" style="display: none;">Confirmar</button>
             </div>
-
             <div class="files-section">
-                <h3><span class="material-symbols-outlined">folder_open</span> Mi Almacenamiento</h3>
-                <div class="table-container">
-                    <ul id="file-list" class="file-list">
-                        <!-- Los archivos aparecerán aquí -->
-                    </ul>
-                </div>
+                <ul id="file-list" class="file-list"></ul>
             </div>
         </main>
     </div>

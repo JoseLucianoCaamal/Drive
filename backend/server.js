@@ -120,10 +120,15 @@ app.post('/api/cambiar-visibilidad', (req, res) => {
     });
 });
 
-// Ruta pública (para que los no-usuarios vean archivos públicos)
+
+// Ruta pública: No requiere autenticación (no valida usuario ni rol)
 app.get('/api/archivos-publicos', (req, res) => {
+    // Consultamos solo los archivos que tienen la visibilidad en 'publico'
     db.all("SELECT * FROM archivos WHERE visibilidad = 'publico'", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            console.error("Error al obtener archivos públicos:", err);
+            return res.status(500).json({ error: err.message });
+        }
         res.json(rows);
     });
 });

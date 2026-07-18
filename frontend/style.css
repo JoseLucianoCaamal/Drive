@@ -57,7 +57,7 @@ button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size
 .file-list a { color: var(--text-main); text-decoration: none; font-weight: 500; }
 .file-list a:hover { color: var(--primary); text-decoration: underline; }
 
-/* --- ESTILOS DE LA GALER�A VISUAL Y ADMIN --- */
+/* --- ESTILOS DE LA GALER�A VISUAL Y ADMIN --- */
 .admin-badge { background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 10px; display: none; vertical-align: middle; }
 
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding-top: 10px; }
@@ -73,3 +73,18 @@ button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size
 .file-name { font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-meta { font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; }
 .file-owner { color: var(--primary); font-weight: 500; }
+
+/* Corrección para que el botón no ocupe todo el ancho */
+.top-nav button.btn-primary {
+    width: auto;
+    padding: 8px 16px;
+    margin-left: auto; /* Empuja el botón a la derecha */
+}
+
+/* Asegurar que las vistas estén ocultas por defecto */
+.view-container {
+    display: none;
+}
+.view-container.active {
+    display: block;
+}
