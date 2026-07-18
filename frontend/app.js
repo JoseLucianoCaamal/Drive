@@ -39,7 +39,7 @@ async function iniciarSesion() {
             usuarioActual = datos.usuario;
             rolActual = datos.rol;
 
-            // NUEVO: Guardamos las credenciales en el navegador
+            // Guardamos las credenciales en el navegador
             localStorage.setItem('drive_usuario', usuarioActual);
             localStorage.setItem('drive_rol', rolActual);
 
@@ -54,7 +54,7 @@ async function iniciarSesion() {
     }
 }
 
-// FUNCIÓN AUXILIAR: Para no repetir código, esto cambia la pantalla
+// Función para cambiar la vista
 function activarDashboard(user, rol) {
     document.getElementById('login-view').classList.remove('active');
     document.getElementById('dashboard-view').classList.add('active');
@@ -116,8 +116,12 @@ async function cargarArchivos() {
 
         archivos.forEach(archivo => {
             const esImagen = archivo.tipo_mime && archivo.tipo_mime.startsWith('image/');
+            
+            // CORRECCIÓN: La ruta ahora incluye al dueño (archivo.propietario)
+            const rutaArchivo = `/uploads/${archivo.propietario}/${archivo.nombre_fisico}`;
+            
             const miniatura = esImagen 
-                ? `<img src="/uploads/${archivo.nombre_fisico}" alt="${archivo.nombre_original}" loading="lazy">`
+                ? `<img src="${rutaArchivo}" alt="${archivo.nombre_original}" loading="lazy">`
                 : `<span class="material-symbols-outlined icon-doc">description</span>`;
 
             const dueñoFila = rolActual === 'admin' 
@@ -126,7 +130,7 @@ async function cargarArchivos() {
 
             const tarjeta = `
                 <div class="file-card">
-                    <a href="/uploads/${archivo.nombre_fisico}" target="_blank" class="file-thumb">
+                    <a href="${rutaArchivo}" target="_blank" class="file-thumb">
                         ${miniatura}
                     </a>
                     <div class="file-info">
@@ -146,7 +150,6 @@ async function cargarArchivos() {
 }
 
 function cerrarSesion() {
-    // Borramos las variables y la memoria del navegador
     usuarioActual = ''; rolActual = '';
     localStorage.removeItem('drive_usuario');
     localStorage.removeItem('drive_rol');

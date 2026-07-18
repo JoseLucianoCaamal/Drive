@@ -16,14 +16,23 @@ if (!fs.existsSync(carpetaDestino)) {
 
 // NUEVO: Esto permite que el frontend pueda ver y cargar las imágenes para la galería
 app.use('/uploads', express.static(carpetaDestino));
+// Servir imágenes (logos, etc.)
+app.use('/img', express.static(path.join(__dirname, 'Img')));
 
 // CONFIGURACIÓN DE ALMACENAMIENTO AVANZADA
 const configuracionAlmacenaje = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, carpetaDestino);
+        // Obtenemos el usuario de la petición
+        const usuario = req.body.usuario || 'desconocido';
+        const userDir = path.join(carpetaDestino, usuario);
+        
+        // Creamos la carpeta del usuario si no existe
+        if (!fs.existsSync(userDir)){
+            fs.mkdirSync(userDir, { recursive: true });
+        }
+        cb(null, userDir);
     },
     filename: function (req, file, cb) {
-        // Le agregamos la fecha en milisegundos para que el nombre sea único en el disco duro
         const prefijoUnico = Date.now() + '-';
         cb(null, prefijoUnico + file.originalname);
     }

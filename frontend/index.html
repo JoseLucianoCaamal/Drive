@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive Pro</title>
+    <title>Drive AKKO</title>
     <link rel="stylesheet" href="style.css">
     <!-- Iconos de Google -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <!-- Favicon -->
+    <link rel="icon" href="/img/akko.png" type="image/png">
 </head>
 <body>
 
@@ -14,10 +16,10 @@
     <div id="login-view" class="view-container active">
         <div class="login-box">
             <div class="logo">
-                <span class="material-symbols-outlined icon-large">cloud_sync</span>
-                <h2>Drive Pro</h2>
+                <img src="/img/akko.png" alt="Logo" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px;">
+                <h2>Drive AKKO</h2>
             </div>
-            <p class="subtitle">Acceso seguro a tu servidor</p>
+            <p class="subtitle">Acceso al servidor</p>
             
             <div class="input-group">
                 <span class="material-symbols-outlined">person</span>
@@ -37,10 +39,12 @@
     <!-- PANTALLA PRINCIPAL (DASHBOARD) -->
     <div id="dashboard-view" class="view-container">
         <nav class="top-nav">
-            <div class="logo-small">
-                <span class="material-symbols-outlined">cloud</span>
-                <h3>Drive Pro</h3>
+            <!-- AQUÍ ESTÁ EL LOGO EN EL NAV -->
+            <div class="logo-small" style="display: flex; align-items: center; gap: 10px;">
+                <img src="/img/akko.png" alt="Logo" style="width: 35px; height: 35px; border-radius: 50%;">
+                <h3 style="margin: 0;">Drive AKKO</h3>
             </div>
+            
             <div class="user-menu">
                 <span class="material-symbols-outlined">account_circle</span>
                 <span id="user-display">Bienvenido</span>
