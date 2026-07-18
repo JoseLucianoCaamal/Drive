@@ -9,11 +9,13 @@ app.use(express.json());
 // Configuración de almacenamiento dinámica
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const subPath = req.body.path || ''; 
+        // Leemos la ruta desde req.query en lugar de req.body
+        const subPath = req.query.path || ''; 
         const dest = path.join(__dirname, '../uploads', subPath);
         
-        // Crea la carpeta si no existe
+        // Crear carpetas dinámicamente si no existen
         if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+        
         cb(null, dest);
     },
     filename: (req, file, cb) => {
