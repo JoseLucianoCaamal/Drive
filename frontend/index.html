@@ -4,61 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="/img/akko.png" type="image/png">
+    <link rel="icon" href="/Img/akko.png" type="image/png">
     <title>Drive AKKO</title>
 </head>
 <body>
-    <!-- Botones superiores -->
     <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
-    <button id="login-btn-top" class="btn-login-top" onclick="abrirModal()">🔑 Ingresar</button>
+    <button id="login-btn-top" class="btn-login-top" onclick="abrirModal('login-modal')">🔑 Ingresar</button>
     
-    <!-- Barra de usuario (Oculta si no hay sesión) -->
     <div id="user-bar-top" class="user-bar-top" style="display: none;">
         <span id="welcome-text">👑</span>
+        <button id="admin-btn" class="btn-icon" style="display:none;" onclick="abrirDashboard()" title="Panel de Usuarios">⚙️</button>
+        <button class="btn-icon" onclick="abrirModal('settings-modal')" title="Configuración">🔐</button>
         <button class="btn-logout" onclick="logout()">Salir</button>
     </div>
 
     <header>
-        <img src="/img/akko.png" alt="Logo AKKO" class="logo">
+        <img src="/Img/akko.png" alt="Logo AKKO" class="logo">
         <h1>Drive AKKO</h1>
     </header>
 
     <div id="toast" class="toast"></div>
 
-    <!-- MODAL DE LOGIN OCULTO -->
+    <!-- MODAL DE LOGIN -->
     <div id="login-modal" class="modal-overlay" style="display: none;">
-        <div class="login-card modal-content">
-            <span class="close-btn" onclick="cerrarModal()">&times;</span>
-            <h2>Bóveda AKKO</h2>
-            <p class="text-muted">Acceso exclusivo para administradores.</p>
+        <div class="modal-content login-card">
+            <span class="close-btn" onclick="cerrarModal('login-modal')">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <p class="text-muted">Accede a tu cuenta para gestionar tus archivos.</p>
             <input type="text" id="username" placeholder="Usuario" class="custom-input">
             <input type="password" id="password" placeholder="Contraseña" class="custom-input">
             <button class="btn-primary" onclick="login()">Entrar</button>
         </div>
     </div>
+
+    <!-- MODAL CAMBIAR CONTRASEÑA -->
+    <div id="settings-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content login-card">
+            <span class="close-btn" onclick="cerrarModal('settings-modal')">&times;</span>
+            <h2>Cambiar Contraseña</h2>
+            <input type="password" id="new-password" placeholder="Nueva contraseña" class="custom-input">
+            <button class="btn-primary" onclick="cambiarPassword()">Actualizar</button>
+        </div>
+    </div>
+
+    <!-- MODAL DASHBOARD ADMIN -->
+    <div id="dashboard-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content dashboard-card">
+            <span class="close-btn" onclick="cerrarModal('dashboard-modal')">&times;</span>
+            <h2>Gestión de Usuarios</h2>
+            <div class="create-user-box">
+                <input type="text" id="new-username" placeholder="Nuevo Usuario" class="custom-input">
+                <input type="text" id="new-userpass" placeholder="Contraseña Inicial" class="custom-input">
+                <button class="btn-primary" onclick="crearUsuario()">Crear Usuario</button>
+            </div>
+            <div id="users-list" class="users-list"></div>
+        </div>
+    </div>
+
+    <!-- MODAL CREAR CARPETA -->
+    <div id="create-folder-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content login-card">
+            <span class="close-btn" onclick="cerrarModal('create-folder-modal')">&times;</span>
+            <h2>Nueva Carpeta</h2>
+            <input type="text" id="folder-name-input" placeholder="Nombre de la carpeta" class="custom-input">
+            <button class="btn-primary" onclick="confirmarCrearCarpeta()">Crear</button>
+        </div>
+    </div>
+
+    <!-- MODAL RENOMBRAR -->
+    <div id="rename-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content login-card">
+            <span class="close-btn" onclick="cerrarModal('rename-modal')">&times;</span>
+            <h2>Renombrar</h2>
+            <input type="text" id="rename-input" placeholder="Nuevo nombre" class="custom-input">
+            <button class="btn-primary" onclick="confirmarRenombrar()">Guardar</button>
+        </div>
+    </div>
+
+    <!-- MODAL ELIMINAR -->
+    <div id="delete-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content login-card">
+            <span class="close-btn" onclick="cerrarModal('delete-modal')">&times;</span>
+            <h2 style="color: #ef4444;">⚠️ Advertencia</h2>
+            <p class="text-muted">¿Estás seguro de que deseas eliminar este elemento? Esta acción no se puede deshacer.</p>
+            <button class="btn-primary" style="background: #ef4444;" onclick="confirmarEliminar()">Sí, eliminar</button>
+            <button class="btn-secondary" onclick="cerrarModal('delete-modal')">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL AKKFLIX -->
+    <div id="akkflix-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content akkflix-card">
+            <span class="close-btn" onclick="cerrarAkkflix()">&times;</span>
+            <h2 id="akkflix-title" style="color: #e50914;">AKKFLIX</h2>
+            <div id="media-container"></div>
+        </div>
+    </div>
     
-    <!-- CONTENEDOR PRINCIPAL -->
     <main class="container">
-        <!-- Tarjeta de subida (Oculta a los invitados) -->
+        <!-- ZONA DE SUBIDA OCULTA PARA INVITADOS -->
         <div id="upload-section" class="upload-card" style="display: none;">
             <h2>Subir Archivo</h2>
-            <p id="current-folder-label" class="badge">Subiendo a: Raíz</p>
-            
+            <p id="current-folder-label" class="badge">Ruta: Raíz</p>
             <label class="custom-file-upload">
                 <div class="upload-icon">☁️</div>
-                <span id="file-name">Haz clic para seleccionar un archivo</span>
+                <span id="file-name">Seleccionar archivo</span>
                 <input type="file" id="inputArchivo" onchange="mostrarNombre()">
             </label>
-            
-            <button class="btn-primary" onclick="subirArchivo()">🚀 Subir al Servidor</button>
+            <button class="btn-primary" onclick="subirArchivo()">🚀 Subir</button>
+            <button class="btn-secondary" onclick="abrirCrearCarpeta()">📁 Nueva Carpeta</button>
         </div>
 
-        <!-- Explorador SIEMPRE visible -->
         <div class="explorer-card">
-            <h3>Archivos Públicos</h3>
-            <div id="file-list">
-                <div class="loader">Cargando...</div>
-            </div>
+            <h3>Explorador de Archivos</h3>
+            <div id="file-list"><div class="loader">Cargando...</div></div>
         </div>
     </main>
 
