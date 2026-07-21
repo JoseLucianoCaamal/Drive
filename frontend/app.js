@@ -1,5 +1,5 @@
 let currentPath = '';
-let actionData = {}; // Memoria temporal para los modales
+let actionData = {}; // Memoria para modales
 
 function showNotification(msg) {
     const toast = document.getElementById("toast");
@@ -110,27 +110,41 @@ async function cargarArchivos(folderPath = '') {
     }
     
     archivos.forEach(archivo => {
-        const isMedia = archivo.name.match(/\.(mp4|webm|mp3|wav|ogg)$/i);
+        const isMedia = archivo.name.match(/\.(mp4|webm|ogg|mp3|wav|jpg|jpeg|png|gif|webp|pdf)$/i);
         const itemContainer = document.createElement('div');
         itemContainer.className = 'file-item-container';
 
         const item = document.createElement('div');
         item.className = 'file-item-main';
-        item.innerHTML = `${archivo.isDirectory ? '📁' : (isMedia ? '🎞️' : '📄')} &nbsp; ${archivo.name}`;
+        
+        let icon = archivo.isDirectory ? '📁' : '📄';
+        if (isMedia && !archivo.isDirectory) icon = '👁️'; // Icono para los que tienen previsualización
+
+        item.innerHTML = `${icon} &nbsp; ${archivo.name}`;
         
         item.onclick = () => {
             if (archivo.isDirectory) cargarArchivos(archivo.path);
-            else if (isMedia) abrirAkkflix(archivo.path, archivo.name);
+            else if (isMedia) abrirVisor(archivo.path, archivo.name);
             else window.open(`/uploads/${archivo.path}`, '_blank');
         };
         itemContainer.appendChild(item);
 
-        // Controles si es dueño o admin
+        const actions = document.createElement('div');
+        actions.className = 'file-actions';
+
+        // Botón de descargar (Para todos, incluso invitados)
+        if (!archivo.isDirectory) {
+            const btnDownload = document.createElement('a');
+            btnDownload.className = 'btn-icon';
+            btnDownload.innerText = '⬇️';
+            btnDownload.title = "Descargar";
+            btnDownload.href = `/uploads/${archivo.path}`;
+            btnDownload.download = archivo.name;
+            actions.appendChild(btnDownload);
+        }
+
+        // Controles de Dueño / Admin
         if (token && (role === 'admin' || currentUser === archivo.owner)) {
-            const actions = document.createElement('div');
-            actions.className = 'file-actions';
-            
-            // Switch Toggle Público/Privado
             const switchContainer = document.createElement('div');
             switchContainer.className = 'switch-container';
             switchContainer.innerHTML = `
@@ -147,34 +161,60 @@ async function cargarArchivos(folderPath = '') {
 
             const btnDelete = document.createElement('button');
             btnDelete.className = 'btn-icon'; btnDelete.innerText = '🗑️'; 
-            btnDelete.onclick = () => abrirEliminar(archivo.path);
+            btnDelete.onclick = () => {
+                actionData.pathToDelete = archivo.path;
+                actionData.mode = 'file';
+                mostrarAdvertencia("Eliminar Archivo", `¿Seguro que deseas eliminar ${archivo.name}?`, confirmarEliminar);
+            };
 
             actions.append(switchContainer, btnRename, btnDelete);
-            itemContainer.appendChild(actions);
         }
+        
+        if (actions.childNodes.length > 0) itemContainer.appendChild(actions);
         listaDiv.appendChild(itemContainer);
     });
 }
 
-// --- AKKFLIX ---
-function abrirAkkflix(path, name) {
+// --- VISOR UNIVERSAL (AKKFLIX E IMÁGENES) ---
+function abrirVisor(path, name) {
     const container = document.getElementById('media-container');
+    const title = document.getElementById('akkflix-title');
+    const downloadBtn = document.getElementById('download-media-btn');
     const ext = name.split('.').pop().toLowerCase();
+    
     container.innerHTML = '';
+    title.innerText = name;
+    title.style.color = "var(--text-main)";
+    downloadBtn.href = `/uploads/${path}`;
+    downloadBtn.download = name;
     
     if (['mp4', 'webm', 'ogg'].includes(ext)) {
+        title.innerText = "AKKFLIX";
+        title.style.color = "#e50914";
         container.innerHTML = `<video controls autoplay><source src="/uploads/${path}" type="video/${ext}"></video>`;
-    } else {
+    } else if (['mp3', 'wav'].includes(ext)) {
         container.innerHTML = `<audio controls autoplay><source src="/uploads/${path}" type="audio/${ext}"></audio>`;
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+        container.innerHTML = `<img src="/uploads/${path}" style="max-width:100%; border-radius:8px; display:block; margin: 0 auto;">`;
+    } else if (ext === 'pdf') {
+        container.innerHTML = `<iframe src="/uploads/${path}" style="width:100%; height:60vh; border:none; border-radius:8px;"></iframe>`;
     }
     abrirModal('akkflix-modal');
 }
-function cerrarAkkflix() {
+function cerrarVisor() {
     document.getElementById('media-container').innerHTML = ''; 
     cerrarModal('akkflix-modal');
 }
 
-// --- FUNCIONES MODALES CRUD (SIN ALERTAS NATIVAS) ---
+// --- FUNCIONES MODALES ---
+function mostrarAdvertencia(titulo, texto, accionConfirmar) {
+    document.getElementById('warning-title').innerText = titulo;
+    document.getElementById('warning-text').innerText = texto;
+    const btn = document.getElementById('warning-confirm-btn');
+    btn.onclick = accionConfirmar;
+    abrirModal('warning-modal');
+}
+
 function abrirCrearCarpeta() {
     document.getElementById('folder-name-input').value = '';
     abrirModal('create-folder-modal');
@@ -188,15 +228,18 @@ async function confirmarCrearCarpeta() {
     cargarArchivos(currentPath);
 }
 
-function abrirEliminar(path) {
-    actionData.pathToDelete = path;
-    abrirModal('delete-modal');
-}
-
 async function confirmarEliminar() {
-    await fetch('/eliminar', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ targetPath: actionData.pathToDelete }) });
-    cerrarModal('delete-modal');
-    cargarArchivos(currentPath);
+    if (actionData.mode === 'file') {
+        await fetch('/eliminar', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ targetPath: actionData.pathToDelete }) });
+        cargarArchivos(currentPath);
+    } else if (actionData.mode === 'user') {
+        await fetch(`/api/users/${actionData.userToDelete}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('drive-token') } });
+        abrirDashboard();
+    } else if (actionData.mode === 'reset') {
+        await fetch(`/api/users/reset`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ username: actionData.userToReset, initial_password: actionData.passToReset }) });
+        showNotification("Contraseña reseteada");
+    }
+    cerrarModal('warning-modal');
 }
 
 function abrirRenombrar(path, name) {
@@ -217,7 +260,6 @@ async function toggleVisibilidad(targetPath, isChecked) {
     const is_public = isChecked ? 1 : 0;
     await fetch('/visibilidad', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ targetPath, is_public }) });
     cargarArchivos(currentPath);
-    showNotification(is_public ? "Cambiado a Público" : "Cambiado a Privado");
 }
 
 // --- PANEL ADMIN ---
@@ -258,50 +300,17 @@ async function crearUsuario() {
     }
 }
 
-// Reemplazo del confirm para eliminar usuario
 function abrirEliminarUsuario(username) {
     actionData.userToDelete = username;
-    document.querySelector('#delete-modal h2').innerText = "Eliminar Usuario";
-    document.querySelector('#delete-modal p').innerText = `¿Seguro que deseas eliminar a ${username}?`;
-    
-    // Cambiamos temporalmente el onclick del boton confirmar
-    const btnConfirmar = document.querySelector('#delete-modal .btn-primary');
-    const oldOnClick = btnConfirmar.onclick;
-    btnConfirmar.onclick = async () => {
-        await fetch(`/api/users/${actionData.userToDelete}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('drive-token') } });
-        cerrarModal('delete-modal');
-        abrirDashboard();
-        showNotification("Usuario eliminado");
-        // Restaurar funcion original
-        btnConfirmar.onclick = confirmarEliminar;
-        document.querySelector('#delete-modal h2').innerText = "⚠️ Advertencia";
-        document.querySelector('#delete-modal p').innerText = "¿Estás seguro de eliminar este elemento? Esta acción no se puede deshacer.";
-    };
-    abrirModal('delete-modal');
+    actionData.mode = 'user';
+    mostrarAdvertencia("Eliminar Usuario", `¿Seguro que deseas eliminar a ${username}?`, confirmarEliminar);
 }
 
-// Reemplazo del confirm para resetear pass
 function resetearPass(username, initial_password) {
     actionData.userToReset = username;
     actionData.passToReset = initial_password;
-    document.querySelector('#delete-modal h2').innerText = "Restablecer Contraseña";
-    document.querySelector('#delete-modal p').innerText = `¿Restablecer contraseña de ${username} a: ${initial_password}?`;
-    document.querySelector('#delete-modal .btn-primary').innerText = "Restablecer";
-    document.querySelector('#delete-modal .btn-primary').style.background = "var(--accent)";
-    
-    const btnConfirmar = document.querySelector('#delete-modal .btn-primary');
-    btnConfirmar.onclick = async () => {
-        await fetch(`/api/users/reset`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ username: actionData.userToReset, initial_password: actionData.passToReset }) });
-        cerrarModal('delete-modal');
-        showNotification("Contraseña reseteada");
-        // Restaurar
-        btnConfirmar.onclick = confirmarEliminar;
-        btnConfirmar.innerText = "Sí, eliminar";
-        btnConfirmar.style.background = "#ef4444";
-        document.querySelector('#delete-modal h2').innerText = "⚠️ Advertencia";
-        document.querySelector('#delete-modal p').innerText = "¿Estás seguro de eliminar este elemento? Esta acción no se puede deshacer.";
-    };
-    abrirModal('delete-modal');
+    actionData.mode = 'reset';
+    mostrarAdvertencia("Restablecer Contraseña", `¿Restablecer contraseña de ${username} a: ${initial_password}?`, confirmarEliminar);
 }
 
 async function cambiarPassword() {

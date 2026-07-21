@@ -81,23 +81,24 @@
         </div>
     </div>
 
-    <!-- MODAL ELIMINAR -->
-    <div id="delete-modal" class="modal-overlay" style="display: none;">
+    <!-- MODAL ELIMINAR/RESETEAR (Genérico de advertencia) -->
+    <div id="warning-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content login-card">
-            <span class="close-btn" onclick="cerrarModal('delete-modal')">&times;</span>
-            <h2 style="color: #ef4444;">⚠️ Advertencia</h2>
-            <p class="text-muted">¿Estás seguro de eliminar este elemento? Esta acción no se puede deshacer.</p>
-            <button class="btn-primary" style="background: #ef4444;" onclick="confirmarEliminar()">Sí, eliminar</button>
-            <button class="btn-secondary" onclick="cerrarModal('delete-modal')">Cancelar</button>
+            <span class="close-btn" onclick="cerrarModal('warning-modal')">&times;</span>
+            <h2 id="warning-title" style="color: #ef4444;">⚠️ Advertencia</h2>
+            <p id="warning-text" class="text-muted">¿Estás seguro de continuar?</p>
+            <button id="warning-confirm-btn" class="btn-primary" style="background: #ef4444;">Sí, confirmar</button>
+            <button class="btn-secondary" onclick="cerrarModal('warning-modal')">Cancelar</button>
         </div>
     </div>
 
-    <!-- MODAL AKKFLIX -->
+    <!-- MODAL VISOR UNIVERSAL (AKKFLIX / PDF / IMG) -->
     <div id="akkflix-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content akkflix-card">
-            <span class="close-btn" onclick="cerrarAkkflix()">&times;</span>
+            <span class="close-btn" onclick="cerrarVisor()">&times;</span>
             <h2 id="akkflix-title" style="color: #e50914;">AKKFLIX</h2>
             <div id="media-container"></div>
+            <a id="download-media-btn" href="#" download class="btn-primary" style="margin-top: 15px; display: block; text-decoration: none;">⬇️ Descargar Archivo</a>
         </div>
     </div>
     

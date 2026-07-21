@@ -22,13 +22,15 @@ db.serialize(() => {
         initial_password TEXT
     )`);
 
+    // Migración: Agregar columna initial_password si no existe (evita errores en DB viejas)
+    db.run("ALTER TABLE users ADD COLUMN initial_password TEXT", (err) => { /* Ignorar si ya existe */ });
+
     db.run(`CREATE TABLE IF NOT EXISTS metadata (
         path TEXT PRIMARY KEY,
         owner TEXT,
         is_public INTEGER DEFAULT 0
     )`);
 
-    // Superusuario
     const superUser = 'akkojlca';
     const superPass = bcrypt.hashSync('akkojlca312', 8);
     db.get("SELECT * FROM users WHERE username = ?", [superUser], (err, row) => {
@@ -70,6 +72,14 @@ const tokenOpcional = (req, res, next) => {
 
 const normalizePath = (p) => p.replace(/\\/g, '/');
 
+// Función auxiliar: Saber si la carpeta padre es pública para heredar permiso
+const getParentVisibility = (folderPath, callback) => {
+    if (!folderPath) return callback(0); // La raíz siempre es privada
+    db.get("SELECT is_public FROM metadata WHERE path = ?", [folderPath], (err, row) => {
+        callback(row && row.is_public === 1 ? 1 : 0);
+    });
+};
+
 // --- 3. RUTAS API ---
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
@@ -85,15 +95,13 @@ app.post('/login', (req, res) => {
 app.post('/cambiar-password', verificarToken, (req, res) => {
     const { newPassword } = req.body;
     const hash = bcrypt.hashSync(newPassword, 8);
-    db.run("UPDATE users SET password = ? WHERE id = ?", [hash, req.user.id], (err) => {
-        if (err) return res.status(500).json({ error: 'Error al actualizar' });
-        res.send('Contraseña actualizada');
-    });
+    db.run("UPDATE users SET password = ? WHERE id = ?", [hash, req.user.id], () => res.send('Actualizada'));
 });
 
-// Panel de Usuarios (Solo Admin)
+// Panel Usuarios
 app.get('/api/users', verificarToken, verificarAdmin, (req, res) => {
     db.all("SELECT id, username, role, initial_password FROM users WHERE role != 'admin'", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Error BD' });
         res.json(rows || []);
     });
 });
@@ -103,7 +111,7 @@ app.post('/api/users', verificarToken, verificarAdmin, (req, res) => {
     const hash = bcrypt.hashSync(password, 8);
     db.run("INSERT INTO users (username, password, role, initial_password) VALUES (?, ?, 'user', ?)", 
         [username, hash, password], (err) => {
-        if (err) return res.status(400).json({ error: 'El usuario ya existe en el sistema' });
+        if (err) return res.status(400).json({ error: 'El usuario ya existe' });
         res.send('Usuario creado');
     });
 });
@@ -139,8 +147,8 @@ app.get('/listar', tokenOpcional, (req, res) => {
                     owner: meta.owner, is_public: meta.is_public 
                 };
             }).filter(item => {
-                if (item.is_public === 1) return true; // Si es público, todos lo ven
-                if (req.user && (req.user.username === item.owner || req.user.role === 'admin')) return true; // Si es tuyo o eres admin
+                if (item.is_public === 1) return true; 
+                if (req.user && (req.user.username === item.owner || req.user.role === 'admin')) return true; 
                 return false;
             });
             res.json(list);
@@ -155,8 +163,12 @@ app.post('/crear-carpeta', verificarToken, (req, res) => {
     
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
-        db.run("INSERT OR REPLACE INTO metadata (path, owner, is_public) VALUES (?, ?, 0)", [itemPath, req.user.username]);
-        res.send('Carpeta creada');
+        // Heredar visibilidad de la carpeta padre
+        getParentVisibility(currentPath, (isPublic) => {
+            db.run("INSERT OR REPLACE INTO metadata (path, owner, is_public) VALUES (?, ?, ?)", 
+                [itemPath, req.user.username, isPublic]);
+            res.send('Carpeta creada');
+        });
     } else {
         res.status(400).json({ error: 'La carpeta ya existe' });
     }
@@ -191,7 +203,6 @@ app.put('/renombrar', verificarToken, (req, res) => {
     } else res.status(404).json({ error: 'No encontrado' });
 });
 
-// Multer y rutas estáticas
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const subPath = req.query.path || ''; 
@@ -207,8 +218,12 @@ app.post('/subir', verificarToken, upload.single('archivo'), (req, res) => {
     if (!req.file) return res.status(400).send('No se recibió archivo');
     const subPath = req.query.path || '';
     const itemPath = normalizePath(subPath ? `${subPath}/${req.file.originalname}` : req.file.originalname);
-    db.run("INSERT OR REPLACE INTO metadata (path, owner, is_public) VALUES (?, ?, 0)", 
-        [itemPath, req.user.username], () => res.send('Subido'));
+    
+    // Heredar visibilidad de la carpeta padre
+    getParentVisibility(subPath, (isPublic) => {
+        db.run("INSERT OR REPLACE INTO metadata (path, owner, is_public) VALUES (?, ?, ?)", 
+            [itemPath, req.user.username, isPublic], () => res.send('Subido'));
+    });
 });
 
 app.use('/Img', express.static(path.join(__dirname, '../Img')));
