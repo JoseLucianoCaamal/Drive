@@ -21,6 +21,7 @@ db.serialize(() => {
         role TEXT,
         initial_password TEXT
     )`);
+
     db.run("ALTER TABLE users ADD COLUMN initial_password TEXT", (err) => {});
 
     db.run(`CREATE TABLE IF NOT EXISTS metadata (
@@ -29,7 +30,6 @@ db.serialize(() => {
         is_public INTEGER DEFAULT 0
     )`);
 
-    // Nueva tabla para AKKFLIX
     db.run(`CREATE TABLE IF NOT EXISTS akkflix (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
@@ -89,7 +89,7 @@ const getParentVisibility = (folderPath, callback) => {
     });
 };
 
-// --- 3. RUTAS API DE USUARIOS Y DRIVE ---
+// --- 3. RUTAS API USUARIOS Y DRIVE ---
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
@@ -109,6 +109,7 @@ app.post('/cambiar-password', verificarToken, (req, res) => {
 
 app.get('/api/users', verificarToken, verificarAdmin, (req, res) => {
     db.all("SELECT id, username, role, initial_password FROM users WHERE role != 'admin'", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Error BD' });
         res.json(rows || []);
     });
 });
@@ -208,7 +209,7 @@ app.put('/renombrar', verificarToken, (req, res) => {
     } else res.status(404).json({ error: 'No encontrado' });
 });
 
-// --- 4. CONFIGURACIÓN MULTER ---
+// --- 4. MULTER & AKKFLIX ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const subPath = req.query.path || ''; 
@@ -231,37 +232,30 @@ app.post('/subir', verificarToken, upload.single('archivo'), (req, res) => {
     });
 });
 
-// --- 5. RUTAS AKKFLIX ---
-app.get('/api/akkflix', tokenOpcional, (req, res) => {
+app.get('/api/akkflix', verificarToken, (req, res) => {
     db.all("SELECT * FROM akkflix", [], (err, rows) => {
         if (err) return res.status(500).json({ error: 'Error BD' });
-        const list = rows.filter(item => {
-            if (item.is_public === 1) return true;
-            if (req.user && (req.user.username === item.owner || req.user.role === 'admin')) return true;
-            return false;
-        });
-        res.json(list);
+        res.json(rows || []);
     });
 });
 
 app.post('/api/akkflix', verificarToken, upload.fields([{ name: 'cover', maxCount: 1 }, { name: 'video', maxCount: 1 }]), (req, res) => {
     const { title, description, genre } = req.body;
-    if (!req.files['video']) return res.status(400).json({ error: 'Falta el video' });
+    if (!req.files || !req.files['video']) return res.status(400).json({ error: 'El archivo de video es obligatorio' });
 
-    const coverName = req.files['cover'] ? req.files['cover'][0].originalname : 'default.jpg';
-    const videoName = req.files['video'][0].originalname;
+    const coverFile = req.files['cover'] ? req.files['cover'][0] : null;
+    const videoFile = req.files['video'][0];
 
-    const coverPath = `Akkflix/${coverName}`;
-    const videoPath = `Akkflix/${videoName}`;
+    const coverPath = coverFile ? `Akkflix/${coverFile.originalname}` : 'Img/akko.png';
+    const videoPath = `Akkflix/${videoFile.originalname}`;
 
     db.run("INSERT INTO akkflix (title, description, genre, cover_path, video_path, owner, is_public) VALUES (?, ?, ?, ?, ?, ?, 1)",
         [title, description, genre, coverPath, videoPath, req.user.username], (err) => {
-            if (err) return res.status(500).json({ error: 'Error en BD' });
-            res.send('Película subida');
+            if (err) return res.status(500).json({ error: 'Error al registrar película' });
+            res.send('Película subida con éxito');
     });
 });
 
-// Rutas estáticas
 app.use('/Img', express.static(path.join(__dirname, '../Img')));
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

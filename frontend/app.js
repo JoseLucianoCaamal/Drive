@@ -59,13 +59,13 @@ function checkAuth() {
 
     if (token) {
         document.getElementById('upload-section').style.display = 'block';
-        document.querySelector('.top-left-controls').style.display = 'none';
+        document.getElementById('login-btn-top').style.display = 'none';
         document.getElementById('user-bar-top').style.display = 'flex';
         document.getElementById('welcome-text').innerText = (role === 'admin' ? "👑 " : "👤 ") + user;
         document.getElementById('admin-btn').style.display = role === 'admin' ? 'inline-block' : 'none';
     } else {
         document.getElementById('upload-section').style.display = 'none';
-        document.querySelector('.top-left-controls').style.display = 'flex';
+        document.getElementById('login-btn-top').style.display = 'block';
         document.getElementById('user-bar-top').style.display = 'none';
     }
     cargarArchivos(currentPath);
@@ -173,7 +173,7 @@ async function cargarArchivos(folderPath = '') {
     });
 }
 
-// --- VISOR GENERAL ---
+// --- VISOR UNIVERSAL ---
 function abrirVisor(path, name, ext) {
     const container = document.getElementById('viewer-container');
     const title = document.getElementById('viewer-title');
@@ -251,7 +251,6 @@ async function toggleVisibilidad(targetPath, isChecked) {
     const is_public = isChecked ? 1 : 0;
     await fetch('/visibilidad', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ targetPath, is_public }) });
     cargarArchivos(currentPath);
-    showNotification(is_public ? "Cambiado a Público" : "Cambiado a Privado");
 }
 
 // --- PANEL ADMIN ---

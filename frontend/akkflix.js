@@ -27,14 +27,20 @@ function checkAuth() {
 async function cargarCatalogo() {
     const token = localStorage.getItem('drive-token');
     const res = await fetch('/api/akkflix', {
-        headers: token ? { 'Authorization': token } : {}
+        headers: { 'Authorization': token }
     });
+    
+    if (!res.ok) {
+        showNotification("Error de autenticación");
+        return;
+    }
+
     const peliculas = await res.json();
     const grid = document.getElementById('movie-grid');
     grid.innerHTML = '';
 
     if(peliculas.length === 0) {
-        grid.innerHTML = '<p class="text-muted" style="text-align:center; grid-column: 1 / -1;">No hay títulos disponibles aún.</p>';
+        grid.innerHTML = '<p class="text-muted" style="text-align:center; grid-column: 1 / -1;">No hay títulos en el catálogo. ¡Agrega uno!</p>';
         return;
     }
 
@@ -61,7 +67,7 @@ function mostrarDetalles(peli) {
             <h2 class="detail-title">${peli.title}</h2>
             <span class="badge" style="background: rgba(229, 9, 20, 0.2); color: #e50914;">${peli.genre || 'General'}</span>
             <p class="detail-desc">${peli.description || 'Sin descripción disponible.'}</p>
-            <p class="text-muted">Subido por: ${peli.owner}</p>
+            <p class="text-muted">Añadido por: ${peli.owner}</p>
             <button class="btn-primary btn-play" onclick="reproducir('${peli.video_path}', '${peli.title}')">▶️ Reproducir</button>
         </div>
     `;
@@ -73,7 +79,7 @@ function reproducir(path, title) {
     const container = document.getElementById('player-container');
     document.getElementById('player-title').innerText = title;
     const ext = path.split('.').pop().toLowerCase();
-    container.innerHTML = `<video controls autoplay><source src="/uploads/${path}" type="video/${ext}"></video>`;
+    container.innerHTML = `<video controls autoplay style="width:100%; border-radius:8px;"><source src="/uploads/${path}" type="video/${ext}"></video>`;
     abrirModal('player-modal');
 }
 
@@ -99,15 +105,20 @@ async function subirPelicula() {
     formData.append('video', video);
 
     try {
-        showNotification("Subiendo... por favor espera.");
+        showNotification("Subiendo película al catálogo...");
         const res = await fetch('/api/akkflix?path=Akkflix', { 
             method: 'POST', body: formData, headers: { 'Authorization': localStorage.getItem('drive-token') }
         });
         if (res.ok) { 
-            showNotification('¡Película subida!'); 
+            showNotification('¡Película publicada!'); 
             cerrarModal('upload-movie-modal');
+            document.getElementById('movie-title').value = '';
+            document.getElementById('movie-genre').value = '';
+            document.getElementById('movie-desc').value = '';
+            document.getElementById('movie-cover').value = '';
+            document.getElementById('movie-video').value = '';
             cargarCatalogo(); 
-        } else showNotification('Error al subir');
+        } else showNotification('Error al subir la película');
     } catch (e) { showNotification('Error de conexión'); }
 }
 
@@ -119,6 +130,13 @@ function toggleTheme() {
 }
 
 window.onload = () => { 
+    const token = localStorage.getItem('drive-token');
+    if (!token) {
+        alert("🔒 Acceso restringido. AKKFLIX es exclusivo para usuarios registrados.");
+        window.location.href = 'index.html';
+        return;
+    }
+
     if (localStorage.getItem('drive-theme') === 'light') {
         document.body.classList.add('light-mode');
         document.getElementById('theme-toggle').innerText = '🌙';

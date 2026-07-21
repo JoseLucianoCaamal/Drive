@@ -27,13 +27,13 @@
             <span class="close-btn" onclick="cerrarModal('upload-movie-modal')">&times;</span>
             <h2 style="color: #e50914;">Agregar Título</h2>
             <input type="text" id="movie-title" placeholder="Título" class="custom-input">
-            <input type="text" id="movie-genre" placeholder="Género" class="custom-input">
+            <input type="text" id="movie-genre" placeholder="Género (Ej. Acción, Comedia)" class="custom-input">
             <textarea id="movie-desc" placeholder="Sinopsis..." class="custom-input" rows="3"></textarea>
             
-            <p style="text-align:left; margin-bottom:5px; font-size:0.9rem;">1. Selecciona la Portada (Imagen)</p>
+            <p style="text-align:left; margin-bottom:5px; font-size:0.85rem; color:var(--text-muted);">1. Portada (Opcional)</p>
             <input type="file" id="movie-cover" class="custom-input" accept="image/*">
             
-            <p style="text-align:left; margin-bottom:5px; font-size:0.9rem;">2. Selecciona el Video</p>
+            <p style="text-align:left; margin-bottom:5px; font-size:0.85rem; color:var(--text-muted);">2. Archivo de Video</p>
             <input type="file" id="movie-video" class="custom-input" accept="video/*">
             
             <button class="btn-primary" style="background: #e50914;" onclick="subirPelicula()">🚀 Subir a AKKFLIX</button>
@@ -45,7 +45,7 @@
         <div class="modal-content viewer-card" style="max-width: 700px;">
             <span class="close-btn" onclick="cerrarModal('movie-detail-modal')">&times;</span>
             <div class="movie-detail-content" id="movie-detail-content">
-                <!-- Se inyecta con JS -->
+                <!-- Inyección vía JS -->
             </div>
         </div>
     </div>

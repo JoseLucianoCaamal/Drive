@@ -10,13 +10,13 @@
 <body>
     <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
     
-    <div class="top-left-controls">
-        <button id="login-btn-top" class="btn-login-top" onclick="abrirModal('login-modal')">🔑 Ingresar</button>
-        <button class="btn-akkflix" onclick="window.location.href='akkflix.html'">🍿 AKKFLIX</button>
-    </div>
+    <!-- Botón único de login para visitantes -->
+    <button id="login-btn-top" class="btn-login-top" onclick="abrirModal('login-modal')">🔑 Ingresar</button>
     
+    <!-- Barra superior para usuarios registrados -->
     <div id="user-bar-top" class="user-bar-top" style="display: none;">
         <span id="welcome-text">👑</span>
+        <button class="btn-akkflix-nav" onclick="window.location.href='akkflix.html'">🍿 AKKFLIX</button>
         <button id="admin-btn" class="btn-icon" style="display:none;" onclick="abrirDashboard()" title="Panel de Usuarios">⚙️</button>
         <button class="btn-icon" onclick="abrirModal('settings-modal')" title="Configuración">🔐</button>
         <button class="btn-logout" onclick="logout()">Salir</button>
