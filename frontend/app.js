@@ -1,4 +1,5 @@
 let currentPath = '';
+let actionData = {}; // Memoria temporal para los modales
 
 function showNotification(msg) {
     const toast = document.getElementById("toast");
@@ -37,7 +38,10 @@ async function login() {
             localStorage.setItem('drive-user', data.username);
             localStorage.setItem('drive-role', data.role);
             cerrarModal('login-modal');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
             checkAuth();
+            showNotification("¡Bienvenido " + data.username + "!");
         } else showNotification(data.error);
     } catch (e) { showNotification("Error de conexión"); }
 }
@@ -78,9 +82,9 @@ async function subirArchivo() {
         const res = await fetch(`/subir?path=${encodeURIComponent(currentPath)}`, { 
             method: 'POST', body: formData, headers: { 'Authorization': localStorage.getItem('drive-token') }
         });
-        if (res.ok) { showNotification('Subido'); input.value = ''; mostrarNombre(); cargarArchivos(currentPath); }
-        else { res.status === 401 ? logout() : showNotification('Error'); }
-    } catch (e) { showNotification('Error'); }
+        if (res.ok) { showNotification('Subido con éxito'); input.value = ''; mostrarNombre(); cargarArchivos(currentPath); }
+        else { res.status === 401 ? logout() : showNotification('Error al subir'); }
+    } catch (e) { showNotification('Error de conexión'); }
 }
 
 async function cargarArchivos(folderPath = '') {
@@ -112,9 +116,7 @@ async function cargarArchivos(folderPath = '') {
 
         const item = document.createElement('div');
         item.className = 'file-item-main';
-        
-        let visibilityBadge = archivo.is_public ? '<span class="status-badge badge-public">Público</span>' : '<span class="status-badge badge-private">Privado</span>';
-        item.innerHTML = `${archivo.isDirectory ? '📁' : (isMedia ? '🎞️' : '📄')} &nbsp; ${archivo.name} ${visibilityBadge}`;
+        item.innerHTML = `${archivo.isDirectory ? '📁' : (isMedia ? '🎞️' : '📄')} &nbsp; ${archivo.name}`;
         
         item.onclick = () => {
             if (archivo.isDirectory) cargarArchivos(archivo.path);
@@ -128,18 +130,26 @@ async function cargarArchivos(folderPath = '') {
             const actions = document.createElement('div');
             actions.className = 'file-actions';
             
-            const btnVis = document.createElement('button');
-            btnVis.innerText = archivo.is_public ? '🔒' : '🌍';
-            btnVis.title = "Cambiar Visibilidad";
-            btnVis.onclick = () => toggleVisibilidad(archivo.path, archivo.is_public ? 0 : 1);
+            // Switch Toggle Público/Privado
+            const switchContainer = document.createElement('div');
+            switchContainer.className = 'switch-container';
+            switchContainer.innerHTML = `
+                <span class="switch-label">${archivo.is_public ? 'Público' : 'Privado'}</span>
+                <label class="switch">
+                    <input type="checkbox" ${archivo.is_public ? 'checked' : ''} onchange="toggleVisibilidad('${archivo.path}', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            `;
 
             const btnRename = document.createElement('button');
-            btnRename.innerText = '✏️'; btnRename.onclick = () => renombrarItem(archivo.path, archivo.name);
+            btnRename.className = 'btn-icon'; btnRename.innerText = '✏️'; 
+            btnRename.onclick = () => abrirRenombrar(archivo.path, archivo.name);
 
             const btnDelete = document.createElement('button');
-            btnDelete.innerText = '🗑️'; btnDelete.onclick = () => eliminarItem(archivo.path);
+            btnDelete.className = 'btn-icon'; btnDelete.innerText = '🗑️'; 
+            btnDelete.onclick = () => abrirEliminar(archivo.path);
 
-            actions.append(btnVis, btnRename, btnDelete);
+            actions.append(switchContainer, btnRename, btnDelete);
             itemContainer.appendChild(actions);
         }
         listaDiv.appendChild(itemContainer);
@@ -160,50 +170,72 @@ function abrirAkkflix(path, name) {
     abrirModal('akkflix-modal');
 }
 function cerrarAkkflix() {
-    document.getElementById('media-container').innerHTML = ''; // Detiene el video
+    document.getElementById('media-container').innerHTML = ''; 
     cerrarModal('akkflix-modal');
 }
 
-// --- CRUD ARCHIVOS ---
-async function crearCarpeta() {
-    const folderName = prompt("Nombre de la carpeta:");
-    if (!folderName) return;
+// --- FUNCIONES MODALES CRUD (SIN ALERTAS NATIVAS) ---
+function abrirCrearCarpeta() {
+    document.getElementById('folder-name-input').value = '';
+    abrirModal('create-folder-modal');
+}
+
+async function confirmarCrearCarpeta() {
+    const folderName = document.getElementById('folder-name-input').value;
+    if (!folderName) return showNotification("Escribe un nombre");
     await fetch('/crear-carpeta', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ currentPath, folderName }) });
+    cerrarModal('create-folder-modal');
     cargarArchivos(currentPath);
 }
 
-async function eliminarItem(targetPath) {
-    if (!confirm("⚠️ ¿Eliminar permanentemente?")) return;
-    await fetch('/eliminar', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ targetPath }) });
+function abrirEliminar(path) {
+    actionData.pathToDelete = path;
+    abrirModal('delete-modal');
+}
+
+async function confirmarEliminar() {
+    await fetch('/eliminar', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ targetPath: actionData.pathToDelete }) });
+    cerrarModal('delete-modal');
     cargarArchivos(currentPath);
 }
 
-async function renombrarItem(oldPath, oldName) {
-    const newName = prompt("Nuevo nombre:", oldName);
-    if (!newName || newName === oldName) return;
-    await fetch('/renombrar', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ oldPath, newName }) });
+function abrirRenombrar(path, name) {
+    actionData.oldPath = path;
+    document.getElementById('rename-input').value = name;
+    abrirModal('rename-modal');
+}
+
+async function confirmarRenombrar() {
+    const newName = document.getElementById('rename-input').value;
+    if (!newName) return;
+    await fetch('/renombrar', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ oldPath: actionData.oldPath, newName }) });
+    cerrarModal('rename-modal');
     cargarArchivos(currentPath);
 }
 
-async function toggleVisibilidad(targetPath, is_public) {
+async function toggleVisibilidad(targetPath, isChecked) {
+    const is_public = isChecked ? 1 : 0;
     await fetch('/visibilidad', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ targetPath, is_public }) });
     cargarArchivos(currentPath);
+    showNotification(is_public ? "Cambiado a Público" : "Cambiado a Privado");
 }
 
 // --- PANEL ADMIN ---
 async function abrirDashboard() {
     abrirModal('dashboard-modal');
     const res = await fetch('/api/users', { headers: { 'Authorization': localStorage.getItem('drive-token') } });
+    if(!res.ok) return showNotification("Error al cargar usuarios");
+    
     const users = await res.json();
     const list = document.getElementById('users-list');
     list.innerHTML = '';
     users.forEach(u => {
         list.innerHTML += `
             <div class="user-item">
-                <div class="user-info">👤 <span>${u.username}</span> <br> Pass Inicial: ${u.initial_password}</div>
+                <div class="user-info">👤 <span>${u.username}</span> <br> Pass: <b>${u.initial_password}</b></div>
                 <div class="file-actions">
-                    <button title="Resetear Pass" onclick="resetearPass('${u.username}', '${u.initial_password}')">🔄</button>
-                    <button title="Eliminar" onclick="eliminarUsuario('${u.username}')">🗑️</button>
+                    <button class="btn-icon" title="Resetear Pass" onclick="resetearPass('${u.username}', '${u.initial_password}')">🔄</button>
+                    <button class="btn-icon" title="Eliminar" onclick="abrirEliminarUsuario('${u.username}')">🗑️</button>
                 </div>
             </div>`;
     });
@@ -212,22 +244,64 @@ async function abrirDashboard() {
 async function crearUsuario() {
     const username = document.getElementById('new-username').value;
     const password = document.getElementById('new-userpass').value;
-    await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ username, password }) });
-    abrirDashboard();
-}
-
-async function eliminarUsuario(username) {
-    if(confirm(`¿Eliminar al usuario ${username}?`)) {
-        await fetch(`/api/users/${username}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('drive-token') } });
+    if(!username || !password) return showNotification("Llenar campos");
+    
+    const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ username, password }) });
+    if(res.ok) {
+        document.getElementById('new-username').value = '';
+        document.getElementById('new-userpass').value = '';
+        showNotification("Usuario creado");
         abrirDashboard();
+    } else {
+        const data = await res.json();
+        showNotification(data.error);
     }
 }
 
-async function resetearPass(username, initial_password) {
-    if(confirm(`¿Restablecer contraseña de ${username} a: ${initial_password}?`)) {
-        await fetch(`/api/users/reset`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ username, initial_password }) });
+// Reemplazo del confirm para eliminar usuario
+function abrirEliminarUsuario(username) {
+    actionData.userToDelete = username;
+    document.querySelector('#delete-modal h2').innerText = "Eliminar Usuario";
+    document.querySelector('#delete-modal p').innerText = `¿Seguro que deseas eliminar a ${username}?`;
+    
+    // Cambiamos temporalmente el onclick del boton confirmar
+    const btnConfirmar = document.querySelector('#delete-modal .btn-primary');
+    const oldOnClick = btnConfirmar.onclick;
+    btnConfirmar.onclick = async () => {
+        await fetch(`/api/users/${actionData.userToDelete}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('drive-token') } });
+        cerrarModal('delete-modal');
+        abrirDashboard();
+        showNotification("Usuario eliminado");
+        // Restaurar funcion original
+        btnConfirmar.onclick = confirmarEliminar;
+        document.querySelector('#delete-modal h2').innerText = "⚠️ Advertencia";
+        document.querySelector('#delete-modal p').innerText = "¿Estás seguro de eliminar este elemento? Esta acción no se puede deshacer.";
+    };
+    abrirModal('delete-modal');
+}
+
+// Reemplazo del confirm para resetear pass
+function resetearPass(username, initial_password) {
+    actionData.userToReset = username;
+    actionData.passToReset = initial_password;
+    document.querySelector('#delete-modal h2').innerText = "Restablecer Contraseña";
+    document.querySelector('#delete-modal p').innerText = `¿Restablecer contraseña de ${username} a: ${initial_password}?`;
+    document.querySelector('#delete-modal .btn-primary').innerText = "Restablecer";
+    document.querySelector('#delete-modal .btn-primary').style.background = "var(--accent)";
+    
+    const btnConfirmar = document.querySelector('#delete-modal .btn-primary');
+    btnConfirmar.onclick = async () => {
+        await fetch(`/api/users/reset`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ username: actionData.userToReset, initial_password: actionData.passToReset }) });
+        cerrarModal('delete-modal');
         showNotification("Contraseña reseteada");
-    }
+        // Restaurar
+        btnConfirmar.onclick = confirmarEliminar;
+        btnConfirmar.innerText = "Sí, eliminar";
+        btnConfirmar.style.background = "#ef4444";
+        document.querySelector('#delete-modal h2').innerText = "⚠️ Advertencia";
+        document.querySelector('#delete-modal p').innerText = "¿Estás seguro de eliminar este elemento? Esta acción no se puede deshacer.";
+    };
+    abrirModal('delete-modal');
 }
 
 async function cambiarPassword() {

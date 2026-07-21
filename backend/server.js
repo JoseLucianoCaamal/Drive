@@ -11,7 +11,7 @@ app.use(express.json());
 
 // --- 1. BASE DE DATOS Y LLAVE SECRETA ---
 const db = new sqlite3.Database(path.join(__dirname, '../drive.db'));
-const SECRET_KEY = "GatitosEspaciales2026"; // Tu token solicitado
+const SECRET_KEY = "GatitosEspaciales2026"; 
 
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -70,9 +70,7 @@ const tokenOpcional = (req, res, next) => {
 
 const normalizePath = (p) => p.replace(/\\/g, '/');
 
-// --- 3. RUTAS API (Siempre van antes que las estáticas) ---
-
-// Login y cambio de pass
+// --- 3. RUTAS API ---
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
@@ -105,7 +103,7 @@ app.post('/api/users', verificarToken, verificarAdmin, (req, res) => {
     const hash = bcrypt.hashSync(password, 8);
     db.run("INSERT INTO users (username, password, role, initial_password) VALUES (?, ?, 'user', ?)", 
         [username, hash, password], (err) => {
-        if (err) return res.status(400).json({ error: 'El usuario ya existe' });
+        if (err) return res.status(400).json({ error: 'El usuario ya existe en el sistema' });
         res.send('Usuario creado');
     });
 });
@@ -141,8 +139,8 @@ app.get('/listar', tokenOpcional, (req, res) => {
                     owner: meta.owner, is_public: meta.is_public 
                 };
             }).filter(item => {
-                if (item.is_public === 1) return true;
-                if (req.user && (req.user.username === item.owner || req.user.role === 'admin')) return true;
+                if (item.is_public === 1) return true; // Si es público, todos lo ven
+                if (req.user && (req.user.username === item.owner || req.user.role === 'admin')) return true; // Si es tuyo o eres admin
                 return false;
             });
             res.json(list);
@@ -213,7 +211,7 @@ app.post('/subir', verificarToken, upload.single('archivo'), (req, res) => {
         [itemPath, req.user.username], () => res.send('Subido'));
 });
 
-app.use('/img', express.static(path.join(__dirname, '../Img')));
+app.use('/Img', express.static(path.join(__dirname, '../Img')));
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
