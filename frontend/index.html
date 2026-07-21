@@ -17,7 +17,24 @@
 
     <div id="toast" class="toast"></div>
     
-    <main class="container">
+    <!-- PANTALLA DE LOGIN -->
+    <main id="login-view" class="container">
+        <div class="login-card">
+            <h2>Iniciar Sesión</h2>
+            <p class="text-muted">Ingresa tus credenciales para acceder a la bóveda.</p>
+            <input type="text" id="username" placeholder="Usuario" class="custom-input">
+            <input type="password" id="password" placeholder="Contraseña" class="custom-input">
+            <button class="btn-primary" onclick="login()">Entrar</button>
+        </div>
+    </main>
+
+    <!-- PANTALLA PRINCIPAL DEL DRIVE (Oculta al inicio) -->
+    <main id="app-view" class="container" style="display: none;">
+        <div class="user-bar">
+            <span id="welcome-text">Bienvenido</span>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+
         <div class="upload-card">
             <h2>Subir Archivo</h2>
             <p id="current-folder-label" class="badge">Subiendo a: Raíz</p>
@@ -28,7 +45,7 @@
                 <input type="file" id="inputArchivo" onchange="mostrarNombre()">
             </label>
             
-            <button class="btn-upload" onclick="subirArchivo()">🚀 Subir al Servidor</button>
+            <button class="btn-primary" onclick="subirArchivo()">🚀 Subir al Servidor</button>
         </div>
 
         <div class="explorer-card">
