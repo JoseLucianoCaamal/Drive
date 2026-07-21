@@ -8,6 +8,8 @@
     <title>Drive AKKO</title>
 </head>
 <body>
+    <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
+
     <header>
         <img src="/img/akko.png" alt="Logo AKKO" class="logo">
         <h1>Drive AKKO</h1>
@@ -18,18 +20,22 @@
     <main class="container">
         <div class="upload-card">
             <h2>Subir Archivo</h2>
-            <p id="current-folder-label">Subiendo a: Raíz</p>
+            <p id="current-folder-label" class="badge">Subiendo a: Raíz</p>
+            
             <label class="custom-file-upload">
+                <div class="upload-icon">☁️</div>
+                <span id="file-name">Haz clic para seleccionar un archivo</span>
                 <input type="file" id="inputArchivo" onchange="mostrarNombre()">
-                Seleccionar Archivo
             </label>
-            <span id="file-name">Ningún archivo</span>
-            <button class="btn-upload" onclick="subirArchivo()">Subir al Servidor</button>
+            
+            <button class="btn-upload" onclick="subirArchivo()">🚀 Subir al Servidor</button>
         </div>
 
         <div class="explorer-card">
             <h3>Mis Archivos</h3>
-            <div id="file-list">Cargando...</div>
+            <div id="file-list">
+                <div class="loader">Cargando...</div>
+            </div>
         </div>
     </main>
 
