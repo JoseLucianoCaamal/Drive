@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="/Img/akko.png" type="image/png">
+    <title>AKKFLIX</title>
+</head>
+<body>
+    <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
+    <div class="top-left-controls">
+        <button class="btn-login-top" onclick="window.location.href='index.html'">⬅️ Volver al Drive</button>
+        <button id="btn-upload-movie" class="btn-akkflix" style="display:none;" onclick="abrirModal('upload-movie-modal')">➕ Subir Película</button>
+    </div>
+
+    <header>
+        <h1 style="color: #e50914; font-size: 3rem; font-family: Impact, sans-serif; letter-spacing: 2px;">AKKFLIX</h1>
+        <p class="text-muted">Tu cine personal en la nube</p>
+    </header>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- MODAL SUBIR PELÍCULA -->
+    <div id="upload-movie-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content login-card" style="max-width: 400px;">
+            <span class="close-btn" onclick="cerrarModal('upload-movie-modal')">&times;</span>
+            <h2 style="color: #e50914;">Agregar Título</h2>
+            <input type="text" id="movie-title" placeholder="Título" class="custom-input">
+            <input type="text" id="movie-genre" placeholder="Género" class="custom-input">
+            <textarea id="movie-desc" placeholder="Sinopsis..." class="custom-input" rows="3"></textarea>
+            
+            <p style="text-align:left; margin-bottom:5px; font-size:0.9rem;">1. Selecciona la Portada (Imagen)</p>
+            <input type="file" id="movie-cover" class="custom-input" accept="image/*">
+            
+            <p style="text-align:left; margin-bottom:5px; font-size:0.9rem;">2. Selecciona el Video</p>
+            <input type="file" id="movie-video" class="custom-input" accept="video/*">
+            
+            <button class="btn-primary" style="background: #e50914;" onclick="subirPelicula()">🚀 Subir a AKKFLIX</button>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLES DE LA PELÍCULA -->
+    <div id="movie-detail-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content viewer-card" style="max-width: 700px;">
+            <span class="close-btn" onclick="cerrarModal('movie-detail-modal')">&times;</span>
+            <div class="movie-detail-content" id="movie-detail-content">
+                <!-- Se inyecta con JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- REPRODUCTOR -->
+    <div id="player-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content akkflix-card">
+            <span class="close-btn" onclick="cerrarReproductor()">&times;</span>
+            <h2 id="player-title" style="color: #e50914;">AKKFLIX</h2>
+            <div id="player-container"></div>
+        </div>
+    </div>
+
+    <main class="akkflix-container">
+        <div id="movie-grid" class="movie-grid">
+            <div class="loader">Cargando catálogo...</div>
+        </div>
+    </main>
+
+    <script src="akkflix.js"></script>
+</body>
+</html>

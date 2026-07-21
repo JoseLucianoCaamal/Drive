@@ -1,5 +1,5 @@
 let currentPath = '';
-let actionData = {}; // Memoria para modales
+let actionData = {}; 
 
 function showNotification(msg) {
     const toast = document.getElementById("toast");
@@ -59,13 +59,13 @@ function checkAuth() {
 
     if (token) {
         document.getElementById('upload-section').style.display = 'block';
-        document.getElementById('login-btn-top').style.display = 'none';
+        document.querySelector('.top-left-controls').style.display = 'none';
         document.getElementById('user-bar-top').style.display = 'flex';
         document.getElementById('welcome-text').innerText = (role === 'admin' ? "👑 " : "👤 ") + user;
         document.getElementById('admin-btn').style.display = role === 'admin' ? 'inline-block' : 'none';
     } else {
         document.getElementById('upload-section').style.display = 'none';
-        document.getElementById('login-btn-top').style.display = 'block';
+        document.querySelector('.top-left-controls').style.display = 'flex';
         document.getElementById('user-bar-top').style.display = 'none';
     }
     cargarArchivos(currentPath);
@@ -110,21 +110,21 @@ async function cargarArchivos(folderPath = '') {
     }
     
     archivos.forEach(archivo => {
-        const isMedia = archivo.name.match(/\.(mp4|webm|ogg|mp3|wav|jpg|jpeg|png|gif|webp|pdf)$/i);
+        const ext = archivo.name.split('.').pop().toLowerCase();
+        const isMedia = ['mp4', 'webm', 'ogg', 'mp3', 'wav', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'].includes(ext);
+        
         const itemContainer = document.createElement('div');
         itemContainer.className = 'file-item-container';
 
         const item = document.createElement('div');
         item.className = 'file-item-main';
-        
         let icon = archivo.isDirectory ? '📁' : '📄';
-        if (isMedia && !archivo.isDirectory) icon = '👁️'; // Icono para los que tienen previsualización
-
+        if (isMedia && !archivo.isDirectory) icon = '👁️'; 
         item.innerHTML = `${icon} &nbsp; ${archivo.name}`;
         
         item.onclick = () => {
             if (archivo.isDirectory) cargarArchivos(archivo.path);
-            else if (isMedia) abrirVisor(archivo.path, archivo.name);
+            else if (isMedia) abrirVisor(archivo.path, archivo.name, ext);
             else window.open(`/uploads/${archivo.path}`, '_blank');
         };
         itemContainer.appendChild(item);
@@ -132,7 +132,6 @@ async function cargarArchivos(folderPath = '') {
         const actions = document.createElement('div');
         actions.className = 'file-actions';
 
-        // Botón de descargar (Para todos, incluso invitados)
         if (!archivo.isDirectory) {
             const btnDownload = document.createElement('a');
             btnDownload.className = 'btn-icon';
@@ -143,7 +142,6 @@ async function cargarArchivos(folderPath = '') {
             actions.appendChild(btnDownload);
         }
 
-        // Controles de Dueño / Admin
         if (token && (role === 'admin' || currentUser === archivo.owner)) {
             const switchContainer = document.createElement('div');
             switchContainer.className = 'switch-container';
@@ -175,38 +173,31 @@ async function cargarArchivos(folderPath = '') {
     });
 }
 
-// --- VISOR UNIVERSAL (AKKFLIX E IMÁGENES) ---
-function abrirVisor(path, name) {
-    const container = document.getElementById('media-container');
-    const title = document.getElementById('akkflix-title');
-    const downloadBtn = document.getElementById('download-media-btn');
-    const ext = name.split('.').pop().toLowerCase();
-    
+// --- VISOR GENERAL ---
+function abrirVisor(path, name, ext) {
+    const container = document.getElementById('viewer-container');
+    const title = document.getElementById('viewer-title');
     container.innerHTML = '';
     title.innerText = name;
-    title.style.color = "var(--text-main)";
-    downloadBtn.href = `/uploads/${path}`;
-    downloadBtn.download = name;
     
     if (['mp4', 'webm', 'ogg'].includes(ext)) {
-        title.innerText = "AKKFLIX";
-        title.style.color = "#e50914";
-        container.innerHTML = `<video controls autoplay><source src="/uploads/${path}" type="video/${ext}"></video>`;
+        container.innerHTML = `<video controls autoplay style="width:100%; border-radius:8px;"><source src="/uploads/${path}" type="video/${ext}"></video>`;
     } else if (['mp3', 'wav'].includes(ext)) {
-        container.innerHTML = `<audio controls autoplay><source src="/uploads/${path}" type="audio/${ext}"></audio>`;
+        container.innerHTML = `<audio controls autoplay style="width:100%;"><source src="/uploads/${path}" type="audio/${ext}"></audio>`;
     } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-        container.innerHTML = `<img src="/uploads/${path}" style="max-width:100%; border-radius:8px; display:block; margin: 0 auto;">`;
+        container.innerHTML = `<img src="/uploads/${path}">`;
     } else if (ext === 'pdf') {
-        container.innerHTML = `<iframe src="/uploads/${path}" style="width:100%; height:60vh; border:none; border-radius:8px;"></iframe>`;
+        container.innerHTML = `<iframe src="/uploads/${path}"></iframe>`;
     }
-    abrirModal('akkflix-modal');
-}
-function cerrarVisor() {
-    document.getElementById('media-container').innerHTML = ''; 
-    cerrarModal('akkflix-modal');
+    abrirModal('viewer-modal');
 }
 
-// --- FUNCIONES MODALES ---
+function cerrarVisor() {
+    document.getElementById('viewer-container').innerHTML = ''; 
+    cerrarModal('viewer-modal');
+}
+
+// --- MODALES Y CRUD ---
 function mostrarAdvertencia(titulo, texto, accionConfirmar) {
     document.getElementById('warning-title').innerText = titulo;
     document.getElementById('warning-text').innerText = texto;
@@ -260,6 +251,7 @@ async function toggleVisibilidad(targetPath, isChecked) {
     const is_public = isChecked ? 1 : 0;
     await fetch('/visibilidad', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('drive-token') }, body: JSON.stringify({ targetPath, is_public }) });
     cargarArchivos(currentPath);
+    showNotification(is_public ? "Cambiado a Público" : "Cambiado a Privado");
 }
 
 // --- PANEL ADMIN ---
