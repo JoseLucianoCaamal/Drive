@@ -7,6 +7,20 @@ function showNotification(msg) {
     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
+// --- CONTROL DEL MODAL DE LOGIN ---
+function abrirModal() {
+    const modal = document.getElementById('login-modal');
+    modal.style.display = 'flex';
+    // Pequeño delay para que la animación de CSS funcione
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function cerrarModal() {
+    const modal = document.getElementById('login-modal');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
 // --- LÓGICA DE LOGIN ---
 async function login() {
     const user = document.getElementById('username').value;
@@ -24,12 +38,11 @@ async function login() {
         const data = await res.json();
 
         if (res.ok) {
-            // Guardamos el token en el navegador
             localStorage.setItem('drive-token', data.token);
             localStorage.setItem('drive-user', data.username);
-            
             showNotification("¡Bienvenido " + data.username + "!");
-            checkAuth(); // Cambiamos la vista
+            cerrarModal();
+            checkAuth(); // Actualiza la vista
         } else {
             showNotification(data.error || "Error al iniciar sesión");
         }
@@ -42,6 +55,7 @@ function logout() {
     localStorage.removeItem('drive-token');
     localStorage.removeItem('drive-user');
     checkAuth();
+    showNotification("Sesión cerrada");
 }
 
 function checkAuth() {
@@ -49,13 +63,16 @@ function checkAuth() {
     const user = localStorage.getItem('drive-user');
 
     if (token) {
-        document.getElementById('login-view').style.display = 'none';
-        document.getElementById('app-view').style.display = 'block';
+        // MODO ADMIN
+        document.getElementById('upload-section').style.display = 'block';
+        document.getElementById('login-btn-top').style.display = 'none';
+        document.getElementById('user-bar-top').style.display = 'flex';
         document.getElementById('welcome-text').innerText = "👑 " + user;
-        cargarArchivos(); // Cargamos los archivos solo si hay sesión
     } else {
-        document.getElementById('login-view').style.display = 'block';
-        document.getElementById('app-view').style.display = 'none';
+        // MODO INVITADO
+        document.getElementById('upload-section').style.display = 'none';
+        document.getElementById('login-btn-top').style.display = 'block';
+        document.getElementById('user-bar-top').style.display = 'none';
     }
 }
 
@@ -64,7 +81,7 @@ async function subirArchivo() {
     const input = document.getElementById('inputArchivo');
     if (input.files.length === 0) return showNotification('Selecciona un archivo');
 
-    const token = localStorage.getItem('drive-token'); // Sacamos la llave
+    const token = localStorage.getItem('drive-token'); 
     const formData = new FormData();
     formData.append('archivo', input.files[0]);
 
@@ -73,9 +90,7 @@ async function subirArchivo() {
         const res = await fetch(url, { 
             method: 'POST', 
             body: formData,
-            headers: {
-                'Authorization': token // Mostramos el gafete al cadenero
-            }
+            headers: { 'Authorization': token }
         });
         
         if (res.ok) {
@@ -84,9 +99,8 @@ async function subirArchivo() {
             document.getElementById('file-name').innerText = 'Haz clic para seleccionar un archivo';
             cargarArchivos(currentPath);
         } else {
-            // Si el token expiró o es falso
             if(res.status === 401 || res.status === 403) {
-                showNotification('Sesión expirada. Inicia sesión de nuevo.');
+                showNotification('Sesión expirada o inválida.');
                 logout();
             } else {
                 showNotification('Error en el servidor');
@@ -97,7 +111,7 @@ async function subirArchivo() {
     }
 }
 
-// --- NAVEGACIÓN ---
+// --- NAVEGACIÓN PÚBLICA ---
 async function cargarArchivos(folderPath = '') {
     currentPath = folderPath;
     document.getElementById('current-folder-label').innerText = 
@@ -166,8 +180,9 @@ function loadTheme() {
     }
 }
 
-// Al iniciar, revisamos el tema y si hay sesión iniciada
+// Al iniciar
 window.onload = () => {
     loadTheme();
     checkAuth();
+    cargarArchivos(); // Ahora los archivos se cargan SIN importar si hay sesión
 };

@@ -8,7 +8,15 @@
     <title>Drive AKKO</title>
 </head>
 <body>
+    <!-- Botones superiores -->
     <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
+    <button id="login-btn-top" class="btn-login-top" onclick="abrirModal()">🔑 Ingresar</button>
+    
+    <!-- Barra de usuario (Oculta si no hay sesión) -->
+    <div id="user-bar-top" class="user-bar-top" style="display: none;">
+        <span id="welcome-text">👑</span>
+        <button class="btn-logout" onclick="logout()">Salir</button>
+    </div>
 
     <header>
         <img src="/img/akko.png" alt="Logo AKKO" class="logo">
@@ -16,26 +24,23 @@
     </header>
 
     <div id="toast" class="toast"></div>
-    
-    <!-- PANTALLA DE LOGIN -->
-    <main id="login-view" class="container">
-        <div class="login-card">
-            <h2>Iniciar Sesión</h2>
-            <p class="text-muted">Ingresa tus credenciales para acceder a la bóveda.</p>
+
+    <!-- MODAL DE LOGIN OCULTO -->
+    <div id="login-modal" class="modal-overlay" style="display: none;">
+        <div class="login-card modal-content">
+            <span class="close-btn" onclick="cerrarModal()">&times;</span>
+            <h2>Bóveda AKKO</h2>
+            <p class="text-muted">Acceso exclusivo para administradores.</p>
             <input type="text" id="username" placeholder="Usuario" class="custom-input">
             <input type="password" id="password" placeholder="Contraseña" class="custom-input">
             <button class="btn-primary" onclick="login()">Entrar</button>
         </div>
-    </main>
-
-    <!-- PANTALLA PRINCIPAL DEL DRIVE (Oculta al inicio) -->
-    <main id="app-view" class="container" style="display: none;">
-        <div class="user-bar">
-            <span id="welcome-text">Bienvenido</span>
-            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
-        </div>
-
-        <div class="upload-card">
+    </div>
+    
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="container">
+        <!-- Tarjeta de subida (Oculta a los invitados) -->
+        <div id="upload-section" class="upload-card" style="display: none;">
             <h2>Subir Archivo</h2>
             <p id="current-folder-label" class="badge">Subiendo a: Raíz</p>
             
@@ -48,8 +53,9 @@
             <button class="btn-primary" onclick="subirArchivo()">🚀 Subir al Servidor</button>
         </div>
 
+        <!-- Explorador SIEMPRE visible -->
         <div class="explorer-card">
-            <h3>Mis Archivos</h3>
+            <h3>Archivos Públicos</h3>
             <div id="file-list">
                 <div class="loader">Cargando...</div>
             </div>
